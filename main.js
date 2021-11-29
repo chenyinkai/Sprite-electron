@@ -1,13 +1,14 @@
 const {app, BrowserWindow, ipcMain, dialog, Menu, Tray, nativeImage} = require('electron');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const Spritesmith = require('spritesmith');
 
 function convertJson2MapboxStyle(source, pixelRatio) {
     const targetObj = {};
     Object.keys(source).forEach(item => {
-        const newKeyArr = item.split('.')[0].split('/');
-        const newKey = newKeyArr[newKeyArr.length - 1];
+        const newKeyArr = item.split(os.platform() === 'win32' ? '\\' :'/');
+        const newKey = newKeyArr[newKeyArr.length - 1].split('.')[0];
         Object.assign(targetObj, {
             [newKey]: {
                 ...source[item],
@@ -39,7 +40,6 @@ function createWindow() {
         const filesRes = await dialog.showOpenDialog({
             properties: ['openDirectory'],
         });
-        console.log('select-file:savedDirectory in main process has invoked: ', filesRes);
         savedPath = filesRes.filePaths[0];
         return filesRes.filePaths[0];
     });
@@ -49,7 +49,6 @@ function createWindow() {
         const filesRes = await dialog.showOpenDialog({
             properties: ['openFile', 'multiSelections'],
         });
-        console.log('select-file:mutiple in main process has invoked: ', filesRes);
         const files = filesRes.filePaths;
         Spritesmith.run(
             {
@@ -60,7 +59,6 @@ function createWindow() {
                 if (err) {
                     throw err;
                 }
-                console.log('result:::', result);
                 transformResult = result;
             }
         );
@@ -82,7 +80,6 @@ let tray;
 
 function createTray() {
     tray = new Tray(nativeImage.createFromPath(path.join(__dirname, 'favicon.png')));
-    console.log(tray);
     const contextMenu = Menu.buildFromTemplate([
         {
             label: '退出',
